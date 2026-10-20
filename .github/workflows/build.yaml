@@ -23,7 +23,7 @@ jobs:
       - name: Add aarch64 musl target (native host)
         run: |
           rustup target add aarch64-unknown-linux-musl
-          rustup show --installed
+          rustup show
 
       - name: Install musl-tools
         run: |
