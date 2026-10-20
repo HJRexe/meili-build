@@ -1,0 +1,42 @@
+name: build-meilisearch
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout meilisource
+        uses: actions/checkout@v4
+        with:
+          repository: meilisearch/meilisearch
+          ref: v1.55.0
+
+      - name: Install Rust (musl target)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          target: aarch64-unknown-linux-musl
+
+      - name: Add musl linker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+
+      - name: Build meilisearch (release, musl static)
+        run: |
+          export RUSTFLAGS="-C target-feature=+crt-static"
+          cargo build --release --target aarch64-unknown-linux-musl --bin meilisearch
+
+      - name: Verify binary
+        run: |
+          file target/aarch64-unknown-linux-musl/release/meilisearch
+          ./target/aarch64-unknown-linux-musl/release/meilisearch --version
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: meilisearch-aarch64-musl
+          path: target/aarch64-unknown-linux-musl/release/meilisearch
